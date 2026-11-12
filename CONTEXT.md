@@ -48,10 +48,11 @@ Multi-stage: `eclipse-temurin:17-jdk` build stage, `eclipse-temurin:17-jre` runt
 `k8s/configmap.yaml` (`lost-found-config`), `deployment.yaml` (3 replicas, image `lost-found:1.0`, probes on `/actuator/health`), `service.yaml` (`lost-found-service`, NodePort 30080, `sessionAffinity: ClientIP` because data is per pod).
 
 ## Ansible
-Role `lost_found`, service `lost-found`, user `lostfound`, dir `/opt/lost-found`, port 8090, handler `Restart lost-found`. Target: Ubuntu with systemd (uses apt).
+Role `lost_found`, service `lost-found`, user `lostfound`, dir `/opt/lost-found`, port 8090, handler `Restart lost-found`. Target: Multipass Ubuntu VM (systemd, apt) reached over SSH; control machine is macOS. Inventory: host `lostfound-vm` in group `lost_found_servers` (192.168.252.2, user `ubuntu`, key `~/.ssh/ansible_node`). Jar is taken from `target/lost-found.jar` on the control machine; jar pre-check runs on localhost; health check runs on the VM at 127.0.0.1:8090.
+Commands (from repo root): `ansible-playbook -i ansible/inventory.ini ansible/playbook.yml --syntax-check`, then the same without `--syntax-check` to deploy. Only the syntax check has been run so far.
 
 ## Progress log
 - Session 1: Copied pipeline structure from the previous project, renamed everything, replaced the app (Item model, controller, UI, 10 tests). `./mvnw clean package` passes; jar smoke-tested with curl on port 9090; Docker image built and smoke-tested on port 8095. Nothing pushed; no Git repo initialised yet.
 
 ## Remaining
-Git init and push, Jenkins job, Ansible run on an Ubuntu host, kubectl demo, screenshots.
+Git init and push, Jenkins job, Ansible run against the Multipass VM, kubectl demo, screenshots.

@@ -1,6 +1,6 @@
 ---
 - name: Configure Lost and Found server
-  hosts: lost_found
+  hosts: lost_found_servers
   become: true
 
   pre_tasks:
@@ -26,7 +26,7 @@
   post_tasks:
     - name: Wait for the health endpoint to return 200
       ansible.builtin.uri:
-        url: "http://localhost:{{ app_port }}/actuator/health"
+        url: "http://127.0.0.1:{{ app_port }}/actuator/health"
         status_code: 200
       register: health
       until: health.status == 200

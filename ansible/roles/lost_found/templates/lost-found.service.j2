@@ -1,0 +1,15 @@
+[Unit]
+Description=Lost and Found Spring Boot Application
+After=network.target
+
+[Service]
+Type=simple
+User={{ app_user }}
+WorkingDirectory={{ app_dir }}
+Environment=PORT={{ app_port }}
+ExecStart=/usr/bin/java -jar {{ app_dir }}/lost-found.jar
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

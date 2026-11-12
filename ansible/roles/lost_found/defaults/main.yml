@@ -1,0 +1,7 @@
+---
+app_name: lost-found
+app_port: 8090
+app_user: lostfound
+app_dir: /opt/lost-found
+jar_src: "{{ playbook_dir }}/../target/lost-found.jar"
+java_package: openjdk-17-jre-headless

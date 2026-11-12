@@ -64,3 +64,4 @@ k8s/            ConfigMap, Deployment, Service
 
 ## Status
 Pipeline stages are being added step by step; see CONTEXT.md for the progress log.
+Jenkins SCM polling test.

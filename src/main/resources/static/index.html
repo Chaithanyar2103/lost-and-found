@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>College Lost &amp; Found</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #f4f6f8; margin: 0; color: #222; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px; }
+  h1 { margin-top: 0; }
+  form { background: #fff; padding: 16px; border-radius: 8px; display: grid; gap: 8px; box-shadow: 0 1px 3px #0002; }
+  input, select, textarea, button { font: inherit; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+  button { cursor: pointer; background: #1e66f5; color: #fff; border: 0; }
+  button.secondary { background: #e5e7eb; color: #222; }
+  button.danger { background: #d9344a; }
+  .tabs { display: flex; gap: 6px; margin: 16px 0; }
+  .tabs button { background: #e5e7eb; color: #222; }
+  .tabs button.active { background: #1e66f5; color: #fff; }
+  .item { background: #fff; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; box-shadow: 0 1px 3px #0002; }
+  .item h3 { margin: 0 0 4px; display: flex; gap: 8px; align-items: center; }
+  .item p { margin: 2px 0; color: #555; }
+  .actions { margin-top: 8px; display: flex; gap: 6px; }
+  .badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; color: #fff; }
+  .LOST { background: #d9344a; } .FOUND { background: #2e9d4f; } .CLAIMED { background: #6b7280; }
+  #error { background: #fde8ea; color: #a1202f; padding: 8px 12px; border-radius: 6px; margin: 12px 0; display: none; }
+  #empty { text-align: center; color: #777; padding: 24px; display: none; }
+  footer { text-align: center; color: #777; margin-top: 24px; font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>College Lost &amp; Found</h1>
+
+  <form id="form">
+    <input id="name" placeholder="Item name *" required>
+    <textarea id="description" placeholder="Description" rows="2"></textarea>
+    <input id="location" placeholder="Location *" required>
+    <select id="status">
+      <option value="LOST">Lost</option>
+      <option value="FOUND">Found</option>
+    </select>
+    <input id="contact" placeholder="Contact (email or phone)">
+    <button type="submit">Add item</button>
+  </form>
+
+  <div id="error"></div>
+
+  <div class="tabs" id="tabs">
+    <button data-f="" class="active">All</button>
+    <button data-f="LOST">Lost</button>
+    <button data-f="FOUND">Found</button>
+    <button data-f="CLAIMED">Claimed</button>
+  </div>
+
+  <div id="list"></div>
+  <div id="empty">No items here yet.</div>
+
+  <footer id="footer">Served by pod: ... (v...)</footer>
+</main>
+
+<script>
+let filter = '';
+const $ = id => document.getElementById(id);
+
+function showError(msg) {
+  const e = $('error');
+  e.textContent = msg;
+  e.style.display = msg ? 'block' : 'none';
+}
+
+async function api(url, options) {
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) throw new Error('Request failed (' + res.status + ')');
+    showError('');
+    return res.status === 204 ? null : await res.json();
+  } catch (err) {
+    showError(err.message === 'Failed to fetch' ? 'Cannot reach the server.' : err.message);
+    throw err;
+  }
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : s;
+  return d.innerHTML;
+}
+
+async function load() {
+  try {
+    const items = await api('items' + (filter ? '?status=' + filter : ''));
+    $('list').innerHTML = items.map(i => `
+      <div class="item">
+        <h3>${esc(i.name)} <span class="badge ${esc(i.status)}">${esc(i.status)}</span></h3>
+        ${i.description ? `<p>${esc(i.description)}</p>` : ''}
+        <p>Location: ${esc(i.location)}</p>
+        ${i.contact ? `<p>Contact: ${esc(i.contact)}</p>` : ''}
+        <p><small>${new Date(i.createdAt).toLocaleString()}</small></p>
+        <div class="actions">
+          ${i.status !== 'CLAIMED' ? `<button onclick="claim(${i.id})">Claim</button>` : ''}
+          <button class="danger" onclick="del(${i.id})">Delete</button>
+        </div>
+      </div>`).join('');
+    $('empty').style.display = items.length ? 'none' : 'block';
+  } catch (e) { /* error already shown */ }
+}
+
+async function claim(id) {
+  try { await api('items/' + id + '/claim', { method: 'POST' }); load(); } catch (e) {}
+}
+
+async function del(id) {
+  try { await api('items/' + id, { method: 'DELETE' }); load(); } catch (e) {}
+}
+
+$('form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const body = {
+    name: $('name').value, description: $('description').value,
+    location: $('location').value, status: $('status').value, contact: $('contact').value
+  };
+  try {
+    await api('items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    $('form').reset();
+    load();
+  } catch (e) {}
+});
+
+$('tabs').addEventListener('click', ev => {
+  if (ev.target.tagName !== 'BUTTON') return;
+  filter = ev.target.dataset.f;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b === ev.target));
+  load();
+});
+
+fetch('info').then(r => r.json()).then(i => {
+  $('footer').textContent = 'Served by pod: ' + i.pod + ' (v' + i.version + ')';
+}).catch(() => { $('footer').textContent = 'Served by pod: unknown'; });
+
+load();
+</script>
+</body>
+</html>

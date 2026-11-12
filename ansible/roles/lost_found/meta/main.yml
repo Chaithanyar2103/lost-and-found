@@ -1,0 +1,21 @@
+#SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: student
+  description: Installs Java and deploys the Lost and Found Spring Boot jar as a systemd service running under a dedicated system user.
+  company: Personal / course assignment
+
+  license: MIT
+
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+
+  galaxy_tags:
+    - java
+    - springboot
+    - systemd
+
+dependencies: []

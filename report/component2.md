@@ -12,10 +12,15 @@ The Ansible role, Dockerfile and Kubernetes manifests (like the Jenkinsfile and 
 
 ### Development Environment
 - Control machine: macOS (zsh, Homebrew).
-- Ansible target: a Multipass Ubuntu VM reached over SSH from macOS. Inventory host `lostfound-vm` in group `lost_found_servers`, user `ubuntu`, key-based authentication (`~/.ssh/ansible_node`), interpreter `/usr/bin/python3`.
+- Ansible target: Multipass Ubuntu VM, actual instance name `ansible-node` (Ubuntu 24.04.5 LTS), addressed in the Ansible inventory by the alias `lostfound-vm` at `192.168.252.2`. SSH user `ubuntu`, key-based authentication (`~/.ssh/ansible_node`), interpreter `/usr/bin/python3`.
 - Containers and Kubernetes: Docker Desktop with its built-in Kubernetes.
 - Base images: `eclipse-temurin:17-jdk` (build) and `eclipse-temurin:17-jre` (runtime).
-- Versions of Ansible, Multipass, Ubuntu release on the VM, Docker Desktop and Kubernetes: [VERIFY].
+- Ansible Core: 2.21.6.
+- Multipass: 1.16.4+mac.
+- Ubuntu VM: 24.04.5 LTS.
+- Docker CLI: 29.9.2.
+- Docker Desktop: 4.96.3 (244472).
+- Kubernetes: v1.36.1 (Docker Desktop, kind, single-node cluster).
 
 ### Code
 - `ansible/inventory.ini`, `ansible/playbook.yml`, and role `ansible/roles/lost_found/` (tasks, handlers, defaults, template `lost-found.service.j2`).
@@ -26,7 +31,7 @@ The Ansible role, Dockerfile and Kubernetes manifests (like the Jenkinsfile and 
 - `k8s/configmap.yaml` (`lost-found-config`, `PORT: "8080"`), `k8s/deployment.yaml` (3 replicas, image `lost-found:1.0`, `imagePullPolicy: IfNotPresent`, env `PORT` from the ConfigMap, CPU/memory requests and limits, readiness and liveness probes on `/actuator/health`), `k8s/service.yaml` (`lost-found-service`, NodePort 30080 to container port 8080, `sessionAffinity: ClientIP`).
 
 ### Description
-**Ansible.** From the repository root the playbook is run with `ansible-playbook -i ansible/inventory.ini ansible/playbook.yml`. The jar is built on the macOS control machine and copied to the VM; the service runs as the `lostfound` user under systemd on port 8090. The modules used are intended to be idempotent, so a second run is expected to report `changed=0`; Fig 12 is meant to show that.
+**Ansible.** From the repository root the playbook is run with `ansible-playbook -i ansible/inventory.ini ansible/playbook.yml`. The jar is built on the macOS control machine and copied to the VM; the service runs as the `lostfound` user under systemd on port 8090. The Ansible tasks are idempotent. The second playbook run completed with `ok=10`, `changed=0`, `unreachable=0`, `failed=0` and `skipped=1`, confirming that no additional configuration changes were required. This is shown in Fig 12.
 
 **Docker.** Stage 1 (`eclipse-temurin:17-jdk`) copies `mvnw`, `pom.xml` and `.mvn/`, runs `dependency:go-offline`, then copies `src/` and runs `package -DskipTests`. Stage 2 (`eclipse-temurin:17-jre`) creates a non-root user `app`, copies the jar to `/app/app.jar`, exposes 8080 and starts `java -jar`. The image is tagged `lost-found:1.0`.
 

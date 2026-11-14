@@ -15,7 +15,11 @@ The Jenkinsfile, the GitHub Actions workflow, the Ansible role, the Dockerfile a
 - Application: Spring Boot 3.3.5, Java 17 (`java.version` 17 in `pom.xml`), built with the Maven Wrapper (`./mvnw`).
 - Jenkins: Jenkins LTS installed with Homebrew and running natively on the laptop on port 8081. It was started with JDK 21. The project itself targets Java 17; Jenkins did not run on JDK 17.
 - GitHub Actions: `ubuntu-latest` runner with Temurin Java 17 (`actions/setup-java@v4`).
-- Versions of Git, Maven Wrapper distribution, Jenkins LTS and macOS: [VERIFY].
+- Git: 2.56.1.
+- Maven Wrapper distribution: Apache Maven 3.9.9.
+- Java: 17.0.21.
+- Jenkins: 2.580.2.
+- macOS: 26.2 (Build 25C56).
 
 ### Code
 - `pom.xml`: parent `spring-boot-starter-parent` 3.3.5; dependencies `spring-boot-starter-web`, `spring-boot-starter-actuator` and `spring-boot-starter-test` (test scope); `<finalName>lost-found</finalName>`, so the artifact is `target/lost-found.jar`.
